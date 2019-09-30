@@ -12,7 +12,7 @@ http.createServer(function (req, res) {
             res.end();
         } else {
             let cReq = req;
-            let cReq = res;
+            let cRes = res;
             var u = url.parse(cReq.url);
 
             var options = {
