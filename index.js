@@ -1,6 +1,8 @@
 const proxy = require('http-proxy');
 
-const proxyServer = proxy.createProxyServer({});
+const proxyServer = proxy.createProxyServer({
+    target: 'http://0.0.0.0:' + process.env.LEANCLOUD_APP_PORT,
+});
 proxyServer.listen(8000);
 
 require('http').createServer(function (req, res) {
