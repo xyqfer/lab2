@@ -1,36 +1,60 @@
-const http = require('http');
+var http = require('http');
 var net = require('net');
 var url = require('url');
 
-http.createServer(function (req, res) {
-    if (req.url == '/') {
-      res.statusCode = 200;
-      res.end('lab2');
-    } else {
-        if (req.url === '/1.1/functions/_ops/metadatas') {
-            res.statusCode = 404;
-            res.end();
-        } else {
-            let cReq = req;
-            let cRes = res;
-            var u = url.parse(cReq.url);
+function request(cReq, cRes) {
+  console.log('request ' + cReq.url)
 
-            var options = {
-                hostname : u.hostname, 
-                port     : u.port || 80,
-                path     : u.path,       
-                method     : cReq.method,
-                headers     : cReq.headers
-            };
+  let req = cReq;
+    let res = cRes;
 
-            var pReq = http.request(options, function(pRes) {
-                cRes.writeHead(pRes.statusCode, pRes.headers);
-                pRes.pipe(cRes);
-            }).on('error', function(e) {
-                cRes.end();
-            });
+  if (req.url == '/') {
+    res.statusCode = 200;
+    res.end('lab2');
+    return;
+  } else {
+      if (req.url === '/1.1/functions/_ops/metadatas') {
+          res.statusCode = 404;
+          res.end();
+          return;
+      }
+  }
+  
+    var u = url.parse(cReq.url);
 
-            cReq.pipe(pReq);
-        }
-    }
-  }).listen(process.env.LEANCLOUD_APP_PORT);
+    var options = {
+        hostname : u.hostname, 
+        port     : u.port || 80,
+        path     : u.path,       
+        method     : cReq.method,
+        headers     : cReq.headers
+    };
+
+    var pReq = http.request(options, function(pRes) {
+        cRes.writeHead(pRes.statusCode, pRes.headers);
+        pRes.pipe(cRes);
+    }).on('error', function(e) {
+        cRes.end();
+    });
+
+    cReq.pipe(pReq);
+}
+
+function connect(cReq, cSock) {
+  console.log('connect ' + cReq.url)
+    var u = url.parse('http://' + cReq.url);
+
+    var pSock = net.connect(u.port, u.hostname, function() {
+        cSock.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+        pSock.pipe(cSock);
+    }).on('error', function(e) {
+        cSock.end();
+    });
+
+    cSock.pipe(pSock);
+}
+
+http.createServer()
+    .on('request', request)
+    .on('connect', connect)
+    .listen(process.env.LEANCLOUD_APP_PORT);
